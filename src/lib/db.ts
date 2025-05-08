@@ -83,7 +83,7 @@ export const likeHoroscope = async (id: number): Promise<boolean> => {
       WHERE id = ${id}
     `;
 
-        return result.count > 0;
+        return !!result;
     } catch (error) {
         console.error('Error liking horoscope:', error);
         return false;

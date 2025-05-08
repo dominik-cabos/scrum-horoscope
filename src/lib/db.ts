@@ -1,0 +1,79 @@
+// src/lib/db.ts
+import { Database } from 'better-sqlite3';
+import { HoroscopeResult, DatabaseResult } from '../types';
+
+let db: Database | null = null;
+
+if (typeof window === 'undefined') {
+    // Server-side only
+    const sqlite = require('better-sqlite3');
+    db = new sqlite('./horoscope.db');
+
+    // Initialize the database
+    db?.exec(`
+    CREATE TABLE IF NOT EXISTS horoscopes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      firstName TEXT NOT NULL,
+      birthday TEXT NOT NULL,
+      photoUrl TEXT,
+      occupation TEXT NOT NULL,
+      zodiacSign TEXT NOT NULL,
+      horoscope TEXT NOT NULL,
+      createdAt TEXT NOT NULL,
+      saved BOOLEAN DEFAULT 0
+    );
+  `);
+}
+
+export const saveHoroscope = (result: HoroscopeResult): number => {
+    if (!db) return -1;
+
+    const stmt = db.prepare(`
+    INSERT INTO horoscopes (firstName, birthday, photoUrl, occupation, zodiacSign, horoscope, createdAt)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `);
+
+    const now = new Date().toISOString();
+    const info = stmt.run(
+        result.firstName,
+        result.birthday,
+        result.photoUrl,
+        result.occupation,
+        result.zodiacSign,
+        result.horoscope,
+        now
+    );
+
+    return info.lastInsertRowid as number;
+};
+
+export const likeHoroscope = (id: number): boolean => {
+
+    if (!db) return false;
+
+    const stmt = db.prepare(`
+    UPDATE horoscopes SET saved = 1 WHERE id = ?
+  `);
+
+    const info = stmt.run(id);
+    return info.changes > 0;
+}
+
+export const getAllHoroscopes = (): DatabaseResult[] => {
+    if (!db) return [];
+
+    const stmt = db.prepare(`
+  SELECT * FROM horoscopes WHERE saved = 1 ORDER BY createdAt DESC
+`);
+    return stmt.all() as DatabaseResult[];
+};
+
+export const getHoroscopeById = (id: number): DatabaseResult | null => {
+    if (!db) return null;
+
+    const stmt = db.prepare(`
+    SELECT * FROM horoscopes WHERE id = ?
+  `);
+
+    return stmt.get(id) as DatabaseResult || null;
+};

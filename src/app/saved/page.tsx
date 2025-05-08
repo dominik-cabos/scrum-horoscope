@@ -5,6 +5,7 @@ import { DatabaseResult } from '@/types';
 
 // Next.js App Router configuration options
 
+export const dynamic = 'force-dynamic'; // Force revalidation on every request
 
 export default async function SavedPage() {
     const horoscopes = await getAllHoroscopes();

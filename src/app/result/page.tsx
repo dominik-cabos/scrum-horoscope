@@ -20,7 +20,6 @@ export default function ResultPage() {
       try {
         fetch(`/api/horoscope?horoscopeId=${horoscopeId}`)
           .then((response) => response.json())
-
           .then((horoscopeData) => {
             console.log("Decoded data:", horoscopeData);
             setResult(horoscopeData);

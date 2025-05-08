@@ -93,7 +93,7 @@ export async function PUT(request: NextRequest) {
     // Save to database
     const id = horoscopeData.id;
 
-    likeHoroscope(id);
+    await likeHoroscope(id);
 
     return NextResponse.json({ success: true, id });
   } catch (error) {

@@ -29,7 +29,9 @@ export default function RequestForm() {
     "Quality Assurance Engineer",
     "Designer",
     "Product Owner",
-    "Delivery Lead"
+    "Delivery Lead",
+      "Content Creator",
+      "The Boss"
   ];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {

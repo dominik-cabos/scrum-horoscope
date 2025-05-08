@@ -8,7 +8,10 @@ export type Occupation =
     | "Quality Assurance Engineer"
     | "Designer"
     | "Product Owner"
-    | "Delivery Lead";
+    | "Delivery Lead"
+    | "Content Creator"
+    | "The Boss"
+    ;
 
 export interface HoroscopeRequest {
     firstName: string;

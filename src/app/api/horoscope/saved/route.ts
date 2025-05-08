@@ -1,6 +1,6 @@
 // src/app/api/horoscope/saved/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllHoroscopes, getHoroscopeById } from '@/lib/db';
+import { getAllHoroscopes, getHoroscopeById } from '@/lib/db.sqllite';
 
 export async function GET(request: NextRequest) {
     try {

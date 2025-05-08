@@ -3,19 +3,12 @@ import { getAllHoroscopes } from '@/lib/db';
 import HoroscopeList from '@/components/HoroscopeList';
 import { DatabaseResult } from '@/types';
 
-// This function enables Static Site Generation
-export async function generateStaticParams() {
-    const horoscopes = getAllHoroscopes();
-    return horoscopes.map((horoscope) => ({
-        id: horoscope.id.toString(),
-    }));
-}
+// Next.js App Router configuration options
+export const dynamic = 'force-dynamic'; // Equivalent to getServerSideProps in pages router
+export const revalidate = 0; // Revalidate on every request
 
-// This function is required for SSG with occasional revalidation
-export const revalidate = 0; // Revalidate on-demand
-
-export default function SavedPage() {
-    const horoscopes = getAllHoroscopes();
+export default async function SavedPage() {
+    const horoscopes = await getAllHoroscopes();
 
     return (
         <div className="max-w-4xl mx-auto">
@@ -29,7 +22,7 @@ export default function SavedPage() {
                     </a>
                 </div>
             ) : (
-                <HoroscopeList horoscopes={horoscopes as DatabaseResult[]} />
+                <HoroscopeList horoscopes={horoscopes} />
             )}
         </div>
     );

@@ -1,6 +1,6 @@
 // src/lib/api.ts
 import axios from "axios";
-import { HoroscopeRequest,  } from "../types";
+import { HoroscopeRequest } from "../types";
 
 // This would normally be in .env.local
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY;
@@ -10,7 +10,8 @@ if (!CLAUDE_API_KEY) {
 const API_ENDPOINT = "https://api.anthropic.com/v1/messages";
 
 export async function generateHoroscope(
-  request: HoroscopeRequest, zodiacSign: string
+  request: HoroscopeRequest,
+  zodiacSign: string,
 ): Promise<string> {
   try {
     const prompt = `Make me a very funny, rude, sarcastic horoscope
@@ -29,43 +30,45 @@ export async function generateHoroscope(
     Note: The photo was provided separately and you can see it in this conversation.
     `;
 
-
     // In a real application, you would make a call to Claude's API here
     // This is a simplified example
-    const response = await axios.post(
-      API_ENDPOINT,
-      {
-        model: "claude-3-opus-20240229",
-        max_tokens: 1000,
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: prompt,
-              },
-              {
-                type: "image",
-                source: {
-                  type: "base64",
-                  media_type: "image/jpeg",
-                  data: request.photoUrl.split(',')[1]
-                }
-              }
-            ],
-          },
-        ],
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": CLAUDE_API_KEY,
-          "anthropic-version": "2023-06-01",
+    let response;
+    if (process.env.NODE_ENV !== "development") {
+      response = await axios.post(
+        API_ENDPOINT,
+        {
+          model: "claude-3-opus-20240229",
+          max_tokens: 1000,
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "text",
+                  text: prompt,
+                },
+                {
+                  type: "image",
+                  source: {
+                    type: "base64",
+                    media_type: "image/jpeg",
+                    data: request.photoUrl.split(",")[1],
+                  },
+                },
+              ],
+            },
+          ],
         },
-      },
-    );
-    // For development purposes, return a mock response
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": CLAUDE_API_KEY,
+            "anthropic-version": "2023-06-01",
+          },
+        },
+      );
+      // For development purposes, return a mock response
+    }
     if (!response?.data?.content[0]?.text) {
       return `Dear ${request.firstName}, your ${request.occupation} ${getZodiacSign(request.birthday)} Horoscope:
       The alignment of JIRA tickets with Mercury retrograde suggests your next sprint will be memorable for all the wrong reasons. That determined look in your eyes (from your photo) won't save you from the chaos of conflicting requirements. Your manager will praise your "innovative solutions" while secretly wondering if you've been randomly generating code.

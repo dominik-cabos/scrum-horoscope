@@ -1,79 +1,136 @@
 // src/lib/db.ts
-import { Database } from 'better-sqlite3';
+import { neon, neonConfig } from '@neondatabase/serverless';
 import { HoroscopeResult, DatabaseResult } from '../types';
 
-let db: Database | null = null;
+// Configure neon client
+neonConfig.fetchConnectionCache = true;
 
-if (typeof window === 'undefined') {
-    // Server-side only
-    const sqlite = require('better-sqlite3');
-    db = new sqlite('./horoscope.db');
+// Create a SQL query executor using the DATABASE_URL from environment
+// Only initialize on the server side
+const sql = typeof window === 'undefined'
+    ? neon(process.env.DATABASE_URL!)
+    : null;
 
-    // Initialize the database
-    db?.exec(`
-    CREATE TABLE IF NOT EXISTS horoscopes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      firstName TEXT NOT NULL,
-      birthday TEXT NOT NULL,
-      photoUrl TEXT,
-      occupation TEXT NOT NULL,
-      zodiacSign TEXT NOT NULL,
-      horoscope TEXT NOT NULL,
-      createdAt TEXT NOT NULL,
-      saved BOOLEAN DEFAULT 0
-    );
-  `);
+// Initialize the database table
+const initializeDatabase = async (): Promise<void> => {
+    if (!sql) return;
+
+    try {
+        await sql`
+      CREATE TABLE IF NOT EXISTS horoscopes (
+        id SERIAL PRIMARY KEY,
+        firstName TEXT NOT NULL,
+        birthday TEXT NOT NULL,
+        photoUrl TEXT,
+        occupation TEXT NOT NULL,
+        zodiacSign TEXT NOT NULL,
+        horoscope TEXT NOT NULL,
+        createdAt TIMESTAMP NOT NULL,
+        saved BOOLEAN DEFAULT FALSE
+      );
+    `;
+    } catch (error) {
+        console.error('Error initializing database:', error);
+    }
+};
+
+// Initialize the database on server startup
+if (sql) {
+    initializeDatabase().catch(console.error);
 }
 
-export const saveHoroscope = (result: HoroscopeResult): number => {
-    if (!db) return -1;
+export const saveHoroscope = async (result: HoroscopeResult): Promise<number> => {
+    if (!sql) return -1;
+debugger;
+    try {
+        const now = new Date().toISOString();
+        const [newRecord] = await sql`
+      INSERT INTO horoscopes (
+        firstName, 
+        birthday, 
+        photoUrl, 
+        occupation, 
+        zodiacSign, 
+        horoscope, 
+        createdAt
+      )
+      VALUES (
+        ${result.firstName},
+        ${result.birthday},
+        ${result.photoUrl},
+        ${result.occupation},
+        ${result.zodiacSign},
+        ${result.horoscope},
+        ${now}
+      )
+      RETURNING id
+    `;
 
-    const stmt = db.prepare(`
-    INSERT INTO horoscopes (firstName, birthday, photoUrl, occupation, zodiacSign, horoscope, createdAt)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `);
-
-    const now = new Date().toISOString();
-    const info = stmt.run(
-        result.firstName,
-        result.birthday,
-        result.photoUrl,
-        result.occupation,
-        result.zodiacSign,
-        result.horoscope,
-        now
-    );
-
-    return info.lastInsertRowid as number;
+        return newRecord.id;
+    } catch (error) {
+        console.error('Error saving horoscope:', error);
+        return -1;
+    }
 };
 
-export const likeHoroscope = (id: number): boolean => {
+export const likeHoroscope = async (id: number): Promise<boolean> => {
+    if (!sql) return false;
 
-    if (!db) return false;
+    try {
+        const result = await sql`
+      UPDATE horoscopes 
+      SET saved = TRUE 
+      WHERE id = ${id}
+    `;
 
-    const stmt = db.prepare(`
-    UPDATE horoscopes SET saved = 1 WHERE id = ?
-  `);
+        return result.count > 0;
+    } catch (error) {
+        console.error('Error liking horoscope:', error);
+        return false;
+    }
+};
 
-    const info = stmt.run(id);
-    return info.changes > 0;
+export const getAllHoroscopes = async (): Promise<DatabaseResult[]> => {
+    if (!sql) return [];
+
+    try {
+        const horoscopes = await sql`
+      SELECT * 
+      FROM horoscopes 
+      WHERE saved = TRUE 
+      ORDER BY createdAt DESC
+    `;
+
+        return horoscopes.map(h=>convertResult(h)) as DatabaseResult[];
+    } catch (error) {
+        console.error('Error getting all horoscopes:', error);
+        return [];
+    }
+};
+
+export const getHoroscopeById = async (id: number): Promise<DatabaseResult | null> => {
+    if (!sql) return null;
+
+    try {
+        const [horoscope] = await sql`
+      SELECT * 
+      FROM horoscopes 
+      WHERE id = ${id}
+    `;
+
+        return convertResult(horoscope) as DatabaseResult || null;
+    } catch (error) {
+        console.error('Error getting horoscope by id:', error);
+        return null;
+    }
+};
+
+export const convertResult = (horoscopelower: any) =>{
+    return {
+        ...horoscopelower,
+        firstName: horoscopelower.firstname,
+        photoUrl: horoscopelower.photourl,
+        zodiacSign: horoscopelower.zodiacsign,
+        createdAt: horoscopelower.createdat,
+    }
 }
-
-export const getAllHoroscopes = (): DatabaseResult[] => {
-    if (!db) return [];
-
-    const stmt = db.prepare(`
-  SELECT * FROM horoscopes WHERE saved = 1 ORDER BY createdAt DESC
-`);
-    return stmt.all() as DatabaseResult[];
-};
-
-export const getHoroscopeById = (id: number): DatabaseResult | null => {
-    if (!db) return null;
-
-    const stmt = db.prepare(`
-    SELECT * FROM horoscopes WHERE id = ?
-  `);
-
-    return stmt.get(id) as DatabaseResult || null;
-};

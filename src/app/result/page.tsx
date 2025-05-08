@@ -15,6 +15,7 @@ export default function ResultPage() {
 
   useEffect(() => {
     const horoscopeId = searchParams.get("horoscopeId");
+
     if (horoscopeId) {
       try {
         fetch(`/api/horoscope?horoscopeId=${horoscopeId}`)

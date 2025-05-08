@@ -22,7 +22,6 @@ export async function GET(request: NextRequest) {
 
     // Retrieve horoscope data
     const horoscope = await getHoroscopeById(parseInt(horoscopeId));
-debugger;
     if (!horoscope) {
       return NextResponse.json(
         { error: "Horoscope not found" },

@@ -4,8 +4,7 @@ import HoroscopeList from '@/components/HoroscopeList';
 import { DatabaseResult } from '@/types';
 
 // Next.js App Router configuration options
-export const dynamic = 'force-dynamic'; // Equivalent to getServerSideProps in pages router
-export const revalidate = 0; // Revalidate on every request
+
 
 export default async function SavedPage() {
     const horoscopes = await getAllHoroscopes();

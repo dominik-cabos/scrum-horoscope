@@ -41,7 +41,6 @@ if (sql) {
 
 export const saveHoroscope = async (result: HoroscopeResult): Promise<number> => {
     if (!sql) return -1;
-debugger;
     try {
         const now = new Date().toISOString();
         const [newRecord] = await sql`
@@ -81,6 +80,7 @@ export const likeHoroscope = async (id: number): Promise<boolean> => {
       UPDATE horoscopes 
       SET saved = TRUE 
       WHERE id = ${id}
+      
     `;
 
         return !!result;

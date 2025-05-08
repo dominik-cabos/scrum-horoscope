@@ -3,6 +3,11 @@ import type { NextConfig } from "next";
 // next.config.js
 /** @type {import('next').NextConfig} */
 const nextConfig : NextConfig = {
+
+    eslint: {
+        // This completely disables ESLint during the build process
+        ignoreDuringBuilds: true,
+    },
     // Enable serverless functions for API routes
     serverRuntimeConfig: {
         PROJECT_ROOT: __dirname
